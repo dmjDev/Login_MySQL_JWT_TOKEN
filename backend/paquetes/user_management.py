@@ -16,13 +16,13 @@ Funciones de autenticación con token:
 import os
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer   # Importamos OAuth2PasswordBearer. Clases fastAPI para la creación del token de usuario una vez autenticado
-from typing import Union    # Importamos Union desde typing. Clase de tipo de datos que se utiliza para declarar atributos que puedan obtener diferentes tipos de datos
-from passlib.context import CryptContext    # Importamos la clase CryptContext desde passlib que nos generará la codificación del password proveniente del FrontEnd para poder comparalo con el de la DB
-from datetime import datetime, timedelta    # Necesitamos datetime y timedelta para asignar al token el lapso de tiempo que permanecerá activo
-from jose import jwt, JWTError  # Importamos la fuhnción jwt para codificar y decodificar el token y JWTError para manejar posibles excepciones en la decodificación
+from typing import Union                            # Importamos Union desde typing. Clase de tipo de datos que se utiliza para declarar atributos que puedan obtener diferentes tipos de datos
+from passlib.context import CryptContext            # Importamos la clase CryptContext desde passlib que nos generará la codificación del password proveniente del FrontEnd para poder comparalo con el de la DB
+from datetime import datetime, timedelta            # Necesitamos datetime y timedelta para asignar al token el lapso de tiempo que permanecerá activo
+from jose import jwt, JWTError                      # Importamos la fuhnción jwt para codificar y decodificar el token y JWTError para manejar posibles excepciones en la decodificación
 
 from paquetes_mysql.models import ModelUser
-from schemas.user import UserPass
+from schemas.user import User, UserPass, UserExtend
 
 from paquetes_mysql.database import localSession
 from sqlalchemy.orm import Session
@@ -47,13 +47,17 @@ def get_user_by_username(db: Session, username: str):
     result = db.query(ModelUser).filter(ModelUser.username == username).first()
     return result
 
-def create_user(db: Session, user: UserPass):
+def create_user(db: Session, user: UserExtend):
     new_user = ModelUser(
         username = user.username,
-        full_name = user.full_name,
+        nombre_completo = user.nombre_completo,
+        fecha_nacimiento = user.fecha_nacimiento,
         email = user.email,
         disabled = user.disabled,
-        hashed_password = pwd_context.hash(user.hashed_password)
+        hashed_password = pwd_context.hash(user.hashed_password),
+        fecha_registro = user.fecha_registro,
+        ultimo_login = user.ultimo_login,
+        rol = user.rol
     )
     db.add(new_user)
     db.commit()
@@ -78,21 +82,22 @@ def authenticate_user(username: str, password: str):
     
     :param username: String con el nombre de usuario pasado desde el formulario FrontEnd
     :param password: String con el password de usuario pasado desde el formulario FrontEnd
-    :GET_USER: devuelve un diccionario con los datos del usuario o una lista vacía
-    :Condicional USER: En caso de devolver una lista vacía el condicional devuelve un raise con un mensaje de excepción 401 y la cabecera para poder manejar el error desde el FrontEnd
+    :GET_USER_BY_USERNAME: devuelve un diccionario con los datos del usuario o una lista vacía
+    :Condicional USER: En caso de devolver una lista vacía el condicional devuelve un raise con un mensaje de excepción 401
+    y la cabecera para poder manejar el error desde el FrontEnd
     :Condicional VERIFY_PASSWORD: ejecuta la función VERIFY_PASSWORD pasándo como parámetros el password obtenido desde el formulario FrontEnd
     y el password encriptado obtenido de la base de datos, verifica que coincidan o no, obteniendo True o False
-    :return: devuelve los datos en schema UserPass del usuario de tipo diccionario o una lista vacía
+    :return: devuelve los datos en schema UserPass del usuario de tipo diccionario
     '''
     with localSession() as db:
         user_ModelUser = get_user_by_username(db, username)
-        user_UserPass = UserPass.model_validate(user_ModelUser) if user_ModelUser is not None else []
+        schemaUser = UserPass.model_validate(user_ModelUser) if user_ModelUser is not None else []
     
-    if not user_UserPass:
+    if not schemaUser:
         raise HTTPException(status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
-    if not verify_password(password, user_UserPass.hashed_password):
+    if not verify_password(password, schemaUser.hashed_password):
         raise HTTPException(status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
-    return user_UserPass
+    return schemaUser
 
 def create_token(data: dict, time_expire: Union[datetime, None]):
     '''
@@ -127,9 +132,9 @@ def get_user_current(token: str = Depends(oauth2_scheme)):
     :username: si decode funciona correctamente obtenemos el nombre de usuario
     :raise username None: excepción si el username no existe
     :raise except: si decode ha tenido alguna excepción
-    :GET_USER: si username existe en la base de datos obtenemos todos los datos de usuario
+    :GET_USER_BY_USERNAME: si username existe en la base de datos obtenemos todos los datos de usuario con el formato de models MODELUSER
     :raise not user: si el username no existe en la base de datos
-    :return: devuelve los datos de usuario según el Schema de datos UserPass de tipo diccionario o una lista vacía
+    :return: devuelve los datos de usuario según el Schema de datos User de tipo diccionario o una lista vacía
     '''
     try:
         token_decode = jwt.decode(token, key=SECRET_KEY, algorithms=ALGORITHM)
@@ -139,13 +144,15 @@ def get_user_current(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     
+    # RECUPERACION DE LOS DATOS DE USUARIO
     with localSession() as db:
-        user = get_user_by_username(db, username)
+        user_ModelUser = get_user_by_username(db, username)
+        schemaUser = User.model_validate(user_ModelUser) if user_ModelUser is not None else []
     
-    if not user:
+    if not schemaUser:
         raise HTTPException(status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     
-    if user.disabled:
+    if schemaUser.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return user
+    return schemaUser
 

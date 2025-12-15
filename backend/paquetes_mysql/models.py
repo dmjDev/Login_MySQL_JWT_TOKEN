@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean
+from sqlalchemy import Column, String, Integer, Boolean, Date
 from paquetes_mysql.database import Base
 
 class ModelUser(Base):
@@ -11,8 +11,12 @@ class ModelUser(Base):
     '''
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(255), index=True, unique=True, nullable=False)
-    full_name = Column(String(255), index=True)
+    username = Column(String(100), index=True, unique=True, nullable=False)
+    nombre_completo = Column(String(255), index=True)
+    fecha_nacimiento = Column(Date, index=True)
     email = Column(String(255), index=True)
     disabled = Column(Boolean, index=True, default=True)
-    hashed_password = Column(String(255), index=True, nullable=False)
+    hashed_password = Column(String(60), index=True, nullable=False)
+    fecha_registro = Column(Date, index=True)
+    ultimo_login = Column(Date, index=True)
+    rol = Column(Integer, index=True, nullable=False)
