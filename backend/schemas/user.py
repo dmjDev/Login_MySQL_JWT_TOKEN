@@ -22,6 +22,9 @@ class User(BaseModel):
     email: str
     disabled: bool = True
     
+class UserId(User):
+    id: int
+    
 class UserPass(User):
     hashed_password: str
     
@@ -31,6 +34,6 @@ class UserLogin():
 class UserExtend(UserPass, UserLogin):
     fecha_registro: date
     rol: int = 0
-
-class UserId(User):
+    
+class UserFull(UserExtend):
     id: int

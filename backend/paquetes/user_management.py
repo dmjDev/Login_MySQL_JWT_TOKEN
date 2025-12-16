@@ -1,11 +1,14 @@
 '''
 Funciones para la gestión de la tabla de datos "usuarios".
+
 Funciones de manejo de datos de usuarios:
--get_db
--get_users
--get_user_by_id
--get_user_by_username
 -create_user
+-get_users
+-get_user_by_username
+-get_user_by_id
+-update_user_by_id
+-delete_user_by_id
+
 Funciones de autenticación con token:
 -verify_password
 -authenticate_user
@@ -74,6 +77,13 @@ def update_user_by_id(db: Session, id: int, updatedPost: User):
         result.disabled = updatedPost.disabled
     db.commit()
     return result
+
+def delete_user_by_id(db: Session, id: int):
+    user_to_delete = db.query(ModelUser).get(id) 
+    if user_to_delete: db.delete(user_to_delete) 
+    db.commit()
+    return "User deleted"
+
 
 # FUNCIONES DE USER_MANAGEMENT PARA LA AUTENTICACIÓN
 def verify_password(plane_password, hashed_password):

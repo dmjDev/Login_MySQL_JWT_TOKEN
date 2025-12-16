@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm  # Importamos OAuth2PasswordRequestForm. Clases fastAPI para el tratamiento de los datos de autenticación provenientes desde el formulario FrontEnd
 from datetime import timedelta
 
-from schemas.user import User, UserExtend, UserId
+from schemas.user import User, UserExtend, UserId, UserFull
 from paquetes import user_management
 
 from paquetes_mysql.database import get_db
@@ -61,6 +61,12 @@ def get_user(id: int, db: Session = Depends(get_db)):
     siguiendo el modelo ModelUser que devuelve GET_USER_BY_ID con el schema USERID y pasándo como parámetros la sesión ORM obtenida con GET_DB y el ID de usuario
     GET_DB continúa tras el YIELD con FINALLY
     '''
+    user_by_id = user_management.get_user_by_id(db=db, id=id)
+    if user_by_id:
+        return user_by_id
+    raise HTTPException(status_code=404, detail="User not found")
+@user_routes.get('/app/users/UserFull/{id:int}', response_model=UserFull, tags=["User data"])
+def get_user(id: int, db: Session = Depends(get_db)):
     user_by_id = user_management.get_user_by_id(db=db, id=id)
     if user_by_id:
         return user_by_id
