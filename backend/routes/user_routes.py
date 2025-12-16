@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm  # Importamos OAuth2PasswordRequestForm. Clases fastAPI para el tratamiento de los datos de autenticación provenientes desde el formulario FrontEnd
 from datetime import timedelta
 
-from schemas.user import User, UserPass, UserExtend, UserId
+from schemas.user import User, UserExtend, UserId
 from paquetes import user_management
 
 from paquetes_mysql.database import get_db
@@ -12,39 +12,7 @@ user_routes = APIRouter()
 
 ###################################################################################
 # RUTAS DE USER_ROUTES PARA LA GESTIÓN DE DATOS DE USUARIOS
-@user_routes.get('/api/users/', response_model=list[UserId])    # este UserId se puede modificar por cualquier tipo de schema para obtener el formato que queramos User, UserPass, UserExtend y UserId
-def get_users(db: Session = Depends(get_db)):
-    '''
-    Docstring for get_users
-
-    :param db: Hace una petición de dependecia a GET_DB que crea una nueva sesión ORM con todos los parámetros preconfigurados en database.py
-    :type db: Session
-    GET_DB se detiene en YIELD
-    :return: obtiene una lista de usuarios siguiendo el modelo ModelUser de GET_USERS con el schema USER, USERPASS, USEREXTEND o USERID 
-    pasándo como parámetro la sesión ORM obtenida con GET_DB
-    GET_DB continúa tras el YIELD con FINALLY
-    '''
-    return user_management.get_users(db=db)
-
-@user_routes.get('/api/users/{id:int}', response_model=UserId)
-def get_user(id, db: Session = Depends(get_db)):
-    '''
-    Docstring for get_user
-
-    :param id: Recoge el dato ID del formulario de consulta desde el FrontEnd o desde cualquier otra función, instancia o método de clase
-    :param db: Hace una petición de dependecia a GET_DB que crea una nueva sesión ORM con todos los parámetros preconfigurados en database.py
-    :type db: Session
-    GET_DB se detiene en YIELD
-    :return: si el usuario existe y no ha sucedido ninguna excepción, obtiene los datos del usuario ID
-    siguiendo el modelo ModelUser que devuelve GET_USER_BY_ID con el schema USERID y pasándo como parámetros la sesión ORM obtenida con GET_DB y el ID de usuario
-    GET_DB continúa tras el YIELD con FINALLY
-    '''
-    user_by_id = user_management.get_user_by_id(db=db, id=id)
-    if user_by_id:
-        return user_by_id
-    raise HTTPException(status_code=404, detail="User not found")
-
-@user_routes.post('/api/users/', response_model=UserExtend)
+@user_routes.post('/app/users/', response_model=UserExtend, tags=["User data"])
 def create_user(user: UserExtend, db: Session = Depends(get_db)):
     '''
     Docstring for create_user
@@ -64,9 +32,57 @@ def create_user(user: UserExtend, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="User already exists")
     return user_management.create_user(db=db, user=user)
 
+# este UserId se puede modificar por cualquier tipo de schema para obtener el formato que queramos User, UserPass, UserExtend y UserId
+@user_routes.get('/app/users/', response_model=list[UserId], tags=["User data"])
+def get_users(db: Session = Depends(get_db)):
+    '''
+    Docstring for get_users
+
+    :param db: Hace una petición de dependecia a GET_DB que crea una nueva sesión ORM con todos los parámetros preconfigurados en database.py
+    :type db: Session
+    GET_DB se detiene en YIELD
+    :return: obtiene una lista de usuarios siguiendo el modelo ModelUser de GET_USERS con el schema USER, USERPASS, USEREXTEND o USERID 
+    pasándo como parámetro la sesión ORM obtenida con GET_DB
+    GET_DB continúa tras el YIELD con FINALLY
+    '''
+    return user_management.get_users(db=db)
+
+# este UserId se puede modificar por cualquier tipo de schema para obtener el formato que queramos User, UserPass, UserExtend y UserId
+@user_routes.get('/app/users/{id:int}', response_model=UserId, tags=["User data"])
+def get_user(id: int, db: Session = Depends(get_db)):
+    '''
+    Docstring for get_user
+
+    :param id: Recoge el dato ID del formulario de consulta desde el FrontEnd o desde cualquier otra función, instancia o método de clase
+    :param db: Hace una petición de dependecia a GET_DB que crea una nueva sesión ORM con todos los parámetros preconfigurados en database.py
+    :type db: Session
+    GET_DB se detiene en YIELD
+    :return: si el usuario existe y no ha sucedido ninguna excepción, obtiene los datos del usuario ID
+    siguiendo el modelo ModelUser que devuelve GET_USER_BY_ID con el schema USERID y pasándo como parámetros la sesión ORM obtenida con GET_DB y el ID de usuario
+    GET_DB continúa tras el YIELD con FINALLY
+    '''
+    user_by_id = user_management.get_user_by_id(db=db, id=id)
+    if user_by_id:
+        return user_by_id
+    raise HTTPException(status_code=404, detail="User not found")
+
+@user_routes.put('/app/users/{id:int}', response_model=User, tags=["User data"])
+def update_user(id: int, updatedPost: User, db: Session = Depends(get_db)):
+    updated_user = user_management.update_user_by_id(db=db, id=id, updatedPost=updatedPost)
+    if updated_user:
+        return updated_user
+    raise HTTPException(status_code=404, detail="User not updated")
+
+@user_routes.delete('/app/users/{id:int}', response_model=str, tags=["User data"])
+def delete_user(id: int, db: Session = Depends(get_db)):
+    delete_msg = user_management.delete_user_by_id(db=db, id=id)
+    if delete_msg:
+        return delete_msg
+    raise HTTPException(status_code=404, detail="User not deleted")
+
 ###################################################################################
 # RUTAS DE USER_ROUTES PARA LA AUTENTICACIÓN
-@user_routes.get("/users/on", response_model=User)
+@user_routes.get("/users/on", response_model=User, tags=["User login"])
 def user(user: User = Depends(user_management.get_user_current)):
     '''
     1.Docstring for user
@@ -79,10 +95,10 @@ def user(user: User = Depends(user_management.get_user_current)):
     '''
     return user
 
-@user_routes.post("/token", response_model=dict)
+@user_routes.post("/token", response_model=dict, tags=["User login"])
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     '''
-    4.Docstring for login
+    3.Docstring for login
 
     :param form_data: Recoge los datos del formulario de autenticación desde el FrontEnd
     :type form_data: OAuth2PasswordRequestForm

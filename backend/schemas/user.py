@@ -21,26 +21,16 @@ class User(BaseModel):
     fecha_nacimiento: Optional[date] = None
     email: str
     disabled: bool = True
-    ultimo_login: date
     
 class UserPass(User):
-    '''
-    Docstring for UserPass
-    Esquema de datos que recoge los datos básicos de usuario con "User" y le añade el password
-    '''
     hashed_password: str
     
-class UserExtend(UserPass):
-    '''
-    Docstring for UserExtend
-    Esquema de datos que recoge los datos básicos de usuario y el password y añade valores de poca manipulación
-    '''
+class UserLogin():
+    ultimo_login: date
+    
+class UserExtend(UserPass, UserLogin):
     fecha_registro: date
     rol: int = 0
 
-class UserId(UserExtend):
-    '''
-    Docstring for UserId
-    Esquema de datos que recoge todos los datos de usuario, incluido su ID
-    '''
+class UserId(User):
     id: int
