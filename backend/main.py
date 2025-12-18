@@ -22,10 +22,10 @@ app.include_router(user_routes)
 
 #ORIGENES PERMITIDOS FRONTEND #############################
 origin = [
-    ##LOCAL##
-    'http://localhost:3000' # damos acceso a nuestro BackEnd únicamente desde esta URL FrontEnd local
-    ##DOCKER##
-    #'http://172.18.0.4:3000' # UNA VEZ LOS TRES CONTENEDORES CONECTADOS DESDE NUESTRA RED DOCKER SE ASIGNA A NUESTRO BACKEND LA IP DE NUESTRO FORNTEND
+    ##FRONTEND LOCAL##
+    #'http://localhost:3000' # CONEXIÓN FRONTEND LOCAL DE NUESTRO SERVIDOR CUANDO ESTE APUNTA AL PUERTO 3000
+    ##FRONTEND DOCKER##
+    'http://172.18.0.4:3000' # CONEXIÓN FRONTEND MEDIANTE LOS DNS DE LA RED DOCKER CON EL CONTENEDOR DOCKER SIN PUERTOS ABIERTOS
     #'*' # PARA DARA ACCESO ACUALQUIR IP PUBLICA
 ]
 app.add_middleware(

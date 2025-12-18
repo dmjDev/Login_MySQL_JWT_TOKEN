@@ -12,7 +12,7 @@ user_routes = APIRouter()
 
 ###################################################################################
 # RUTAS DE USER_ROUTES PARA LA GESTIÓN DE DATOS DE USUARIOS
-@user_routes.post('/app/users/', response_model=UserExtend, tags=["User data"])
+@user_routes.post('/api/users/', response_model=UserExtend, tags=["User data"])
 def create_user(user: UserExtend, db: Session = Depends(get_db)):
     '''
     Docstring for create_user
@@ -33,7 +33,7 @@ def create_user(user: UserExtend, db: Session = Depends(get_db)):
     return user_management.create_user(db=db, user=user)
 
 # este UserId se puede modificar por cualquier tipo de schema para obtener el formato que queramos User, UserPass, UserExtend y UserId
-@user_routes.get('/app/users/', response_model=list[UserId], tags=["User data"])
+@user_routes.get('/api/users/', response_model=list[UserId], tags=["User data"])
 def get_users(db: Session = Depends(get_db)):
     '''
     Docstring for get_users
@@ -48,7 +48,7 @@ def get_users(db: Session = Depends(get_db)):
     return user_management.get_users(db=db)
 
 # este UserId se puede modificar por cualquier tipo de schema para obtener el formato que queramos User, UserPass, UserExtend y UserId
-@user_routes.get('/app/users/{id:int}', response_model=UserId, tags=["User data"])
+@user_routes.get('/api/users/{id:int}', response_model=UserId, tags=["User data"])
 def get_user(id: int, db: Session = Depends(get_db)):
     '''
     Docstring for get_user
@@ -65,21 +65,21 @@ def get_user(id: int, db: Session = Depends(get_db)):
     if user_by_id:
         return user_by_id
     raise HTTPException(status_code=404, detail="User not found")
-@user_routes.get('/app/users/UserFull/{id:int}', response_model=UserFull, tags=["User data"])
+@user_routes.get('/api/users/UserFull/{id:int}', response_model=UserFull, tags=["User data"])
 def get_user(id: int, db: Session = Depends(get_db)):
     user_by_id = user_management.get_user_by_id(db=db, id=id)
     if user_by_id:
         return user_by_id
     raise HTTPException(status_code=404, detail="User not found")
 
-@user_routes.put('/app/users/{id:int}', response_model=User, tags=["User data"])
+@user_routes.put('/api/users/{id:int}', response_model=User, tags=["User data"])
 def update_user(id: int, updatedPost: User, db: Session = Depends(get_db)):
     updated_user = user_management.update_user_by_id(db=db, id=id, updatedPost=updatedPost)
     if updated_user:
         return updated_user
     raise HTTPException(status_code=404, detail="User not updated")
 
-@user_routes.delete('/app/users/{id:int}', response_model=str, tags=["User data"])
+@user_routes.delete('/api/users/{id:int}', response_model=str, tags=["User data"])
 def delete_user(id: int, db: Session = Depends(get_db)):
     delete_msg = user_management.delete_user_by_id(db=db, id=id)
     if delete_msg:
@@ -88,7 +88,7 @@ def delete_user(id: int, db: Session = Depends(get_db)):
 
 ###################################################################################
 # RUTAS DE USER_ROUTES PARA LA AUTENTICACIÓN
-@user_routes.get("/users/on", response_model=User, tags=["User login"])
+@user_routes.get("/api/users/on", response_model=User, tags=["User login"])
 def user(user: User = Depends(user_management.get_user_current)):
     '''
     1.Docstring for user
